@@ -10,6 +10,7 @@ router.get('/', (req, resp) => {
 
 router.post('/data', (req, resp) => {
     const { command } = req.body;
+    var output;
     console.log(command);
     var ptyProcess = pty.spawn(shell, [], {
         name: 'xterm-color',
@@ -21,9 +22,10 @@ router.post('/data', (req, resp) => {
 
     ptyProcess.on("data", function(data) {
         process.stdout.write(data);
+        output = data;
     });
 
-    var output = process.stdin.read(ptyProcess.write(command + '\r'));
+    ptyProcess.write(command + '\r')
     console.log(output);
     //ptyProcess.resize(100, 40);
     //ptyProcess.write('ls\r');
