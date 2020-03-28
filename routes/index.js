@@ -1,34 +1,31 @@
 const express = require('express');
+const { exec, spawn } = require('child_process');
 const router = express.Router();
-var os = require('os');
-var pty = require('node-pty');
-var shell = os.platform() === 'win32' ? "C:/Windows/system32/WindowsPowerShell/v1.0/powershell.exe" : 'bash';
 
 router.get('/', (req, resp) => {
     resp.render('index');
 });
 
-router.post('/data', (req, resp) => {
+router.post('/sendCommand', (req, resp) => {
     const { command } = req.body;
-    var output;
+
     console.log(command);
-    var ptyProcess = pty.spawn(shell, [], {
-        name: 'xterm-color',
-        cols: 80,
-        rows: 30,
-        cwd: process.env.HOME,
-        env: process.env
+   /*  const args = command.split('-');
+    console.log(args); */
+    const output = spawn(command, [], { cwd: process.env.HOME, env: process.env });
+    output.stdout.on("data", (data) => {
+        console.log(data);
+        resp.send(data);
     });
-
-    ptyProcess.on("data", function(data) {
-        process.stdout.write(data);
-        output = data;
+    output.stderr.on("stderr", (stderr) => {
+        console.log(`stderr: ${stderr}`);
     });
-
-    ptyProcess.write(command + '\r')
-    console.log(output);
-    //ptyProcess.resize(100, 40);
-    //ptyProcess.write('ls\r');
+    output.on("error", (error) => {
+        console.log(`error: ${error.message}`);
+    });
+    output.on("close", close => {
+        console.log(`child process exited with code ${close}`);
+    });
 });
 
 module.exports = router;

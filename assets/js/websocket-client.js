@@ -1,6 +1,6 @@
 $(document).ready(function () {
     //Creating a web socket
-    var socketClient = io.connect('http://localhost:4000');
+    //var socketClient = io.connect('http://localhost:4000');
 
     //Creating and opening a terminal
     var term = new Terminal({
@@ -17,11 +17,19 @@ $(document).ready(function () {
         var event = key.domEvent;
         if (event.code == "Enter") {
             cmndHistory.push(data);
-            socketClient.emit("command", {
-                command: data
+            $.ajax({
+                url: "/terminal/sendCommand",
+                method: "post",
+                data: {command: data},
+                success: function(data) {
+                    term.write('\r\n' + data);
+                    term.write('\r\n\x1B[1;3;31mroot@localhost\x1B[0m $  ');
+                }
             });
+            /* socketClient.emit("command", {
+                command: data
+            }); */
             data = "";
-            term.write('\r\n\x1B[1;3;31mroot@localhost\x1B[0m $  ');
         }
         else if (event.code == "Backspace") {
             data = data.slice(0, data.length - 1);
